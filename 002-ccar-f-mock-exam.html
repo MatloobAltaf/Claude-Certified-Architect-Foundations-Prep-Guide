@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCAR-F Full Simulation — 60 Questions, 120 Minutes</title>
+<style>
+:root{
+  --bg:#1b2231; --panel:#232c3f; --panel2:#2a3449; --line:#38445e;
+  --ink:#e9edf5; --muted:#9aa7bd; --faint:#6b7891;
+  --accent:#e2a95e; --accent-ink:#22180a;
+  --good:#63b899; --bad:#cf7480; --flag:#e2a95e;
+  --d1:#7aa5d8; --d2:#63b899; --d3:#a08fd8; --d4:#d8a45e; --d5:#cf7480;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{background:var(--bg);color:var(--ink);font-family:"Public Sans",-apple-system,"Segoe UI",sans-serif;line-height:1.55;min-height:100vh}
+@font-face{font-family:"Public Sans";src:local("Public Sans"),local("Segoe UI");font-display:swap}
+.serif{font-family:Spectral,Georgia,"Times New Roman",serif}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* ---- start screen ---- */
+#start{padding:64px 0 80px}
+#start h1{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(1.9rem,4vw,2.7rem);line-height:1.2;max-width:22ch}
+#start .sub{color:var(--muted);margin-top:14px;max-width:62ch}
+.rules{margin:34px 0;border-top:1px solid var(--line)}
+.rule{display:flex;gap:18px;padding:14px 0;border-bottom:1px solid var(--line);max-width:70ch}
+.rule b{flex:0 0 150px;font-weight:600;color:var(--ink)}
+.rule span{color:var(--muted)}
+.cta{background:var(--accent);color:var(--accent-ink);font-weight:700;padding:13px 26px;border-radius:8px;font-size:1.05rem}
+.cta:hover{filter:brightness(1.06)}
+.startnote{color:var(--faint);font-size:.85rem;margin-top:14px}
+
+/* ---- exam layout ---- */
+#exam{display:none}
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:16px;padding:10px 20px}
+.progress{color:var(--muted);font-size:.9rem}
+.timer{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;font-size:1.15rem;padding:4px 12px;border-radius:6px;background:var(--panel)}
+.timer.low{background:var(--bad);color:#2a1216}
+.submitbtn{border:1px solid var(--line);padding:7px 16px;border-radius:7px;color:var(--muted)}
+.submitbtn:hover{color:var(--ink);border-color:var(--faint)}
+
+.grid{display:grid;grid-template-columns:250px 1fr;gap:34px;padding:26px 0 90px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+/* palette */
+.palette{position:sticky;top:70px;align-self:start}
+@media(max-width:900px){.palette{position:static}}
+.pgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+@media(max-width:900px){.pgrid{grid-template-columns:repeat(12,1fr)}}
+@media(max-width:560px){.pgrid{grid-template-columns:repeat(10,1fr)}}
+.pcell{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;font-size:.72rem;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative}
+.pcell.answered{background:var(--panel2);color:var(--ink);border-color:var(--faint)}
+.pcell.current{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);color:var(--ink)}
+.pcell.flagged::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--flag)}
+.legend{margin-top:14px;color:var(--faint);font-size:.78rem;display:grid;gap:5px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.keys{margin-top:18px;color:var(--faint);font-size:.75rem;line-height:1.7}
+.keys kbd{border:1px solid var(--line);border-radius:4px;padding:0 5px;font-family:inherit}
+
+/* question card */
+.scen{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:18px}
+.scen summary{cursor:pointer;padding:12px 16px;color:var(--muted);font-size:.9rem;list-style:none;display:flex;gap:10px;align-items:center}
+.scen summary::before{content:"▸";color:var(--faint);transition:transform .15s}
+.scen[open] summary::before{transform:rotate(90deg)}
+.scen .brief{padding:0 16px 14px;color:var(--muted);font-size:.92rem;max-width:75ch}
+.qmeta{display:flex;align-items:center;gap:12px;color:var(--faint);font-size:.85rem;margin-bottom:10px}
+.dtag{padding:2px 9px;border-radius:20px;font-size:.75rem;font-weight:600;color:#171c28}
+.flagbtn{margin-left:auto;color:var(--faint);border:1px solid var(--line);border-radius:6px;padding:4px 12px;font-size:.8rem}
+.flagbtn.on{color:var(--accent-ink);background:var(--flag);border-color:var(--flag)}
+.qtext{font-family:Spectral,Georgia,serif;font-size:1.22rem;line-height:1.5;max-width:66ch;margin-bottom:8px}
+.multi-note{color:var(--accent);font-size:.85rem;font-weight:600;margin-bottom:8px}
+.opts{margin-top:16px;display:grid;gap:10px;max-width:78ch}
+.opt{display:flex;gap:13px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:13px 15px;line-height:1.5;transition:border-color .1s,background .1s}
+.opt:hover{border-color:var(--faint)}
+.opt .key{flex:0 0 24px;height:24px;border-radius:6px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.78rem;color:var(--muted);margin-top:1px}
+.opt.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel))}
+.opt.sel .key{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.nav{display:flex;gap:10px;margin-top:26px}
+.nav button{border:1px solid var(--line);border-radius:8px;padding:10px 20px;color:var(--ink)}
+.nav button:disabled{opacity:.35;cursor:default}
+.nav .next{margin-left:auto;background:var(--panel2)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,14,22,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.open{display:flex}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;max-width:440px;width:100%}
+.mbox h3{font-family:Spectral,Georgia,serif;font-size:1.3rem;margin-bottom:10px}
+.mbox p{color:var(--muted);margin-bottom:20px}
+.mrow{display:flex;gap:10px;justify-content:flex-end}
+.mrow .ghost{border:1px solid var(--line);border-radius:7px;padding:9px 16px;color:var(--muted)}
+.mrow .go{background:var(--accent);color:var(--accent-ink);border-radius:7px;padding:9px 16px;font-weight:700}
+
+/* ---- results ---- */
+#results{display:none;padding:44px 0 100px}
+.scorecard{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:30px;display:flex;flex-wrap:wrap;gap:30px;align-items:center}
+.bigscore{font-family:Spectral,Georgia,serif;font-size:3.4rem;font-weight:600;line-height:1}
+.bigscore small{font-size:1.2rem;color:var(--faint);font-weight:400}
+.verdict{font-weight:700;letter-spacing:.04em;margin-top:6px}
+.verdict.pass{color:var(--good)}
+.verdict.fail{color:var(--bad)}
+.scmeta{color:var(--muted);font-size:.95rem;line-height:1.8}
+.dbars{margin:30px 0 8px;display:grid;gap:14px}
+.dbar .top{display:flex;justify-content:space-between;font-size:.92rem;margin-bottom:5px}
+.dbar .top b{font-weight:600}
+.dbar .top span{color:var(--muted);font-variant-numeric:tabular-nums}
+.track{height:9px;border-radius:5px;background:var(--panel2);overflow:hidden}
+.fill{height:100%;border-radius:5px}
+.readnote{color:var(--faint);font-size:.85rem;max-width:70ch;margin-top:16px}
+.filters{display:flex;gap:8px;margin:36px 0 18px;flex-wrap:wrap}
+.filters button{border:1px solid var(--line);border-radius:20px;padding:6px 16px;color:var(--muted);font-size:.9rem}
+.filters button.on{background:var(--panel2);color:var(--ink);border-color:var(--faint)}
+.rq{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;background:var(--panel);padding:20px 22px;margin-bottom:16px}
+.rq.wrong{border-left-color:var(--bad)}
+.rq.right{border-left-color:var(--good)}
+.rq .qmeta{margin-bottom:8px}
+.rq .qtext{font-size:1.08rem}
+.ropt{border:1px solid var(--line);border-radius:8px;padding:11px 14px;margin-top:9px;max-width:80ch}
+.ropt.correct{border-color:var(--good);background:color-mix(in srgb,var(--good) 8%,var(--panel))}
+.ropt.chosen-wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--panel))}
+.ropt .head{display:flex;gap:10px;align-items:baseline}
+.ropt .head .k{color:var(--faint);font-size:.8rem;flex:0 0 16px}
+.ropt .tagline{font-size:.78rem;font-weight:700;margin-left:auto;white-space:nowrap}
+.ropt .tagline.c{color:var(--good)}
+.ropt .tagline.y{color:var(--bad)}
+.ropt .why{color:var(--muted);font-size:.9rem;margin-top:7px;line-height:1.55}
+.retake{margin-top:30px}
+.retake button{border:1px solid var(--line);border-radius:8px;padding:11px 22px;color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div id="start" class="wrap">
+  <h1>CCAR-F full simulation</h1>
+  <p class="sub serif">Sixty scenario-based questions across five production systems, weighted to the official blueprint. Written to run harder than the medium-tier mocks — every question has at least one defensible wrong answer aimed at a known trap.</p>
+  <div class="rules">
+    <div class="rule"><b>Length</b><span>60 questions · 120 minutes · auto-submits at zero</span></div>
+    <div class="rule"><b>Scoring</b><span>Per-domain accuracy × blueprint weight, scaled to 1000 · pass mark 720</span></div>
+    <div class="rule"><b>Weights</b><span>D1 Agentic Architecture 27% · D3 Claude Code 20% · D4 Prompt Engineering 20% · D2 Tool Design &amp; MCP 18% · D5 Context &amp; Reliability 15%</span></div>
+    <div class="rule"><b>Format</b><span>Single best answer, except two questions marked "Select TWO" (both required for credit)</span></div>
+    <div class="rule"><b>Conditions</b><span>Closed book. Don't refresh the page — progress lives in this tab only.</span></div>
+  </div>
+  <button class="cta" onclick="startExam()">Begin exam — the clock starts now</button>
+  <p class="startnote">Keyboard: 1–4 select · ← → navigate · f flag</p>
+</div>
+
+<div id="exam">
+  <div class="topbar"><div class="wrap">
+    <span class="progress" id="prog"></span>
+    <button class="submitbtn" onclick="askSubmit()">Finish &amp; submit</button>
+    <span class="timer" id="timer">120:00</span>
+  </div></div>
+  <div class="wrap grid">
+    <aside class="palette">
+      <div class="pgrid" id="pgrid"></div>
+      <div class="legend">
+        <div><i style="background:var(--panel2);border:1px solid var(--faint)"></i>answered</div>
+        <div><i style="background:var(--flag)"></i>flagged</div>
+        <div><i style="border:1px solid var(--accent)"></i>current</div>
+      </div>
+      <div class="keys">Shortcuts<br><kbd>1</kbd>–<kbd>4</kbd> select · <kbd>←</kbd><kbd>→</kbd> move · <kbd>f</kbd> flag</div>
+    </aside>
+    <main id="qpane"></main>
+  </div>
+</div>
+
+<div id="results" class="wrap"></div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <h3 id="mtitle">Submit exam?</h3>
+    <p id="mbody"></p>
+    <div class="mrow">
+      <button class="ghost" onclick="closeModal()">Keep working</button>
+      <button class="go" onclick="doSubmit()">Submit now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = [
+ {name:"Meridian Claims", brief:"Meridian is an insurance company deploying a Claude-based claims-processing agent. The agent ingests claim submissions, verifies policies, runs fraud checks, estimates damages, and issues settlement decisions. Payouts are real money; some documents contain customer PII. The system is in production with ~2,000 claims/day."},
+ {name:"OrbitDesk", brief:"OrbitDesk is a SaaS company's Claude-powered customer support resolution agent. It has account access, a knowledge-base search tool, and reply tools. Support policy defines when conversations must be handed to human agents. Volume is moderate; most issues are routine."},
+ {name:"LedgerLens", brief:"LedgerLens is a legal & financial document extraction pipeline built on Claude. It processes contracts, invoices, and statements into structured records that feed downstream accounting systems. Accuracy is contractual; some documents are privileged and must be redacted before any external processing."},
+ {name:"FleetForge", brief:"FleetForge's platform team uses Claude Code across a large monorepo, in interactive sessions and headless CI jobs. The repo contains payment code and infrastructure definitions. The team is standardizing configuration, permissions, and workflows for ~40 engineers."},
+ {name:"Atlas Research", brief:"Atlas runs a multi-agent research system: an orchestrator dispatches worker subagents to gather and analyze sources in parallel, then a synthesizer produces client-facing reports. Sessions are long, sources are large, and reports must distinguish evidence from inference."}
+];
+
+const QUESTIONS = [
+// ---------- S1 Meridian Claims ----------
+{id:"Q1",d:1,sc:0,q:"Production monitoring shows that in about 3% of claims, the agent calls issue_payout before the fraud_check tool has returned a result, occasionally paying flagged claims. The system prompt already instructs 'always complete fraud screening before issuing payment.' What is the most appropriate fix?",
+opts:["Move the fraud-screening instruction to the top of the system prompt and repeat it in the issue_payout tool description",
+"Implement a programmatic prerequisite gate so issue_payout cannot execute unless a completed fraud_check result for that claim ID exists",
+"Add a second reviewer agent that inspects each payout decision before it is finalized",
+"Lower the agent's temperature so its tool-ordering behavior becomes more consistent"],
+ans:[1],
+ex:["Prompt placement and repetition reduce but never eliminate a probabilistic failure. Money leaving the building requires a guarantee, not a lower rate.",
+"Correct. A financial, irreversible action with an always-hold ordering rule needs deterministic enforcement: block the tool until its prerequisite is satisfied. This eliminates the 3% rather than shrinking it.",
+"A reviewer agent adds a component, cost, and latency — and is itself probabilistic. The failure lives in the execution sequence, and a gate fixes it there.",
+"Temperature affects sampling randomness, not whether an ordering rule is enforced. The failure mode would persist."]},
+
+{id:"Q2",d:1,sc:0,q:"A new claims flow is designed: intake parses the submission, then policy lookup and damage estimation can run independently on the parsed claim, then settlement combines both results. Policy lookup and damage estimation each pull large documents into context. Which orchestration shape fits best?",
+opts:["A single agent with all four tools, handling the whole claim in one context window",
+"An orchestrator that dispatches policy lookup and damage estimation to parallel subagents with isolated contexts, then synthesizes for settlement",
+"A mesh of four peer agents that message each other until consensus on the settlement is reached",
+"Four sequential agents in a fixed pipeline, each passing its full context to the next"],
+ans:[1],
+ex:["A single context must hold both large document sets simultaneously, degrading recall and inflating cost. The two middle tasks are independent — that independence is being wasted.",
+"Correct. Two independent subtasks that each need heavy, unrelated context are the textbook case for orchestrator–worker: parallelism for speed, isolation so each worker's documents don't pollute the other's context, and a synthesizer that receives only structured results.",
+"Peer-to-peer consensus adds coordination complexity with no benefit — there is no disagreement to resolve; the workflow structure is known.",
+"A sequential pipeline serializes work that could run in parallel and passes accumulating context forward, compounding the pollution problem."]},
+
+{id:"Q3",d:1,sc:0,q:"Meridian has two behavioral rules for the agent: (1) 'Never include customer PII in messages sent to external email addresses' and (2) 'Prefer concise bullet summaries in internal adjuster notes.' An engineer proposes implementing both as PreToolUse hooks for consistency. What is the correct assessment?",
+opts:["Agree: uniform hook enforcement is easier to audit and both rules benefit from determinism",
+"Rule 1 should be a hook that scans and blocks outgoing messages containing PII; rule 2 should remain a prompt instruction",
+"Both should be prompt instructions, since hooks add implementation complexity the team must maintain",
+"Rule 1 should be a prompt instruction with few-shot examples; rule 2 should be a hook that reformats notes"],
+ans:[1],
+ex:["Uniformity is not the goal — matching the mechanism to the consequence is. Hooking a formatting preference adds maintenance cost for zero risk reduction.",
+"Correct. PII leaving the organization is an irreversible, compliance-critical failure: it demands deterministic enforcement. Note formatting is a recoverable style preference where high-but-imperfect prompt compliance is perfectly acceptable.",
+"Prompt-only enforcement of the PII rule leaves a non-zero leak rate on a safety-critical boundary. That is exactly the case hooks exist for.",
+"This inverts the severity mapping: it leaves the critical rule probabilistic and spends deterministic machinery on style."]},
+
+{id:"Q4",d:1,sc:0,q:"The agent loop treats every non-tool-use stop as completion: whenever a response ends with stop_reason 'end_turn' or 'max_tokens', the loop finalizes the claim decision. Occasionally decisions are finalized from responses that were cut off mid-analysis. What is the root cause and fix?",
+opts:["The context window is too small; upgrade to a model variant with a larger window",
+"The loop collapses distinct stop states; 'max_tokens' means truncation and must be handled by continuing or retrying, never treated as a completed turn",
+"The model is being verbose; instruct it to answer more concisely so it stays under the limit",
+"Raise max_tokens high enough that truncation becomes impossible, then keep the current loop logic"],
+ans:[1],
+ex:["Window size is unrelated — max_tokens caps the output length of a single response, and the bug is in how the cap is interpreted.",
+"Correct. 'end_turn' (model finished) and 'max_tokens' (output truncated) are different states with different meanings. Collapsing them turns truncation into silent data loss on a financial decision. Handle truncation explicitly: continue the response or retry with a higher limit.",
+"Conciseness instructions shrink the frequency of truncation but leave the state-collapse bug intact — truncated responses will still be finalized.",
+"No finite limit makes truncation impossible, and the loop would still misinterpret it whenever it occurs. Fix the state handling."]},
+
+{id:"Q5",d:2,sc:0,q:"The lookup_policy tool returns an empty string both when a policy number does not exist and when the policy database times out. The agent responds identically in both cases, telling claimants their policy 'could not be found.' What is the best fix?",
+opts:["Return structured results distinguishing outcomes, e.g. {status:'not_found'} versus {status:'error', code:'TIMEOUT', retryable:true}",
+"Instruct the agent in the system prompt to consider that empty results might be transient and to phrase responses more cautiously",
+"Have the tool retry internally up to ten times so timeouts become rare enough to ignore",
+"Log timeouts server-side for the ops team while keeping the tool's interface unchanged"],
+ans:[0],
+ex:["Correct. The tool contract is collapsing two different states into one signal, so the model cannot possibly respond correctly. Structured, distinguishable results let the agent retry transient failures and give accurate answers for true absence.",
+"The agent cannot reason its way to information the tool interface destroyed. Cautious phrasing papers over the state collapse without fixing it.",
+"Internal retries help with transient blips but still return the same ambiguous empty string when they exhaust — and telling a customer with a real timeout that their policy doesn't exist remains possible.",
+"Logging aids diagnosis but the agent still cannot distinguish the states, so customer-facing behavior stays wrong."]},
+
+{id:"Q6",d:2,sc:0,q:"An engineer proposes replacing six claim tools with one manage_claim(action, payload) tool where action is an enum ('lookup','update','flag','estimate','payout','close') and payload is a free-form object, arguing it simplifies the tool list. What is the strongest objection?",
+opts:["Enums are unsupported in tool schemas, so the design cannot be implemented",
+"A single generic tool with a loose payload weakens the schema contract: the model loses per-action parameter validation and clear guidance for when each action applies",
+"Six tools are too few to matter either way; the change is cosmetic",
+"The combined tool will exceed API limits on tool description length"],
+ans:[1],
+ex:["Enums are supported in JSON Schema tool definitions; that is not the issue.",
+"Correct. Focused tools with typed, per-action schemas are the contract that lets the API validate inputs and lets the model select correctly. A free-form payload moves validation from the schema into hope, and a payout action hiding inside a generic tool also makes targeted gating harder.",
+"The difference is not cosmetic — it determines whether malformed payout calls can be rejected at the schema level.",
+"Description length is not the binding constraint here; contract quality is."]},
+
+{id:"Q7",d:3,sc:0,q:"Claims engineers using Claude Code re-paste the same domain rules at the start of every session: state regulations to consider, naming conventions for claim records, and which test suite to run. Where should this live?",
+opts:["In a CLAUDE.md file at the repository root, checked into version control",
+"In each engineer's personal notes, pasted at session start as they do now",
+"In a very long first message template stored in a shared document",
+"In the tool descriptions of the claims MCP server"],
+ans:[0],
+ex:["Correct. Stable, project-wide conventions belong in CLAUDE.md: loaded automatically every session, versioned with the code, and consistent across all 40 engineers rather than dependent on individual pasting discipline.",
+"Manual pasting is exactly the friction and inconsistency the memory file exists to remove.",
+"A shared template still requires manual insertion and drifts from the repo it describes.",
+"Tool descriptions define tool contracts, not project conventions; burying regulations there pollutes every tool-selection decision."]},
+
+{id:"Q8",d:4,sc:0,q:"Settlement responses must end with a machine-readable JSON decision consumed by the payment system. The agent has three tools defined (lookup_policy, fraud_check, record_decision). With tool_choice 'auto', it sometimes writes the decision as prose instead of calling record_decision. What is the correct approach?",
+opts:["Switch tool_choice to 'any' so the model is guaranteed to call some tool on the decision turn",
+"On the decision turn, set tool_choice to {type:'tool', name:'record_decision'} to force that specific tool",
+"Add a system-prompt rule: 'You must always call record_decision and never answer in plain text'",
+"Ask the model to output the JSON in a fenced code block so it can be parsed from prose"],
+ans:[1],
+ex:["'any' guarantees a tool call but not the right one — with three tools defined, the model can satisfy 'any' by calling lookup_policy again. Precision matters.",
+"Correct. Forcing the specific tool by name guarantees a structured record_decision call every time, eliminating both prose responses and wrong-tool selection. It is the API-level mechanism for exactly this requirement.",
+"Instructions cannot guarantee tool use under 'auto'; this is the configuration's job, not the prompt's.",
+"Parsing JSON out of prose is the least reliable option — malformed blocks, preambles, and drift all remain possible."]},
+
+{id:"Q9",d:4,sc:0,q:"Adjuster-facing summaries are inconsistent: some are terse fragments, others are long narratives. The system prompt says only 'write professional summaries.' The team is debating adding examples. What is the best first step?",
+opts:["Add ten diverse few-shot example summaries so the model can infer the style",
+"Replace the vague instruction with explicit criteria — required sections, length bounds, tense, what to include and omit — then add one or two examples if needed",
+"Add a post-generation rewrite step that normalizes every summary to a standard shape",
+"Set temperature to 0 so the model picks one consistent interpretation of 'professional'"],
+ans:[1],
+ex:["Examples without stated criteria force the model to reverse-engineer the rule and risk pattern-matching to surface features. Examples are the escalation after criteria, not the substitute for them.",
+"Correct. 'Professional' is a vague rule, and the fix for a vague rule is explicit criteria — the earliest, cheapest layer. Examples then reinforce criteria that exist rather than standing in for criteria that don't.",
+"A rewrite step doubles cost and latency to fix output the model was never properly told how to produce. Fix generation before adding correction machinery.",
+"Temperature 0 makes the model consistently pick one interpretation of an ambiguous rule — not necessarily the one you want."]},
+
+{id:"Q10",d:4,sc:0,q:"A three-stage flow runs OCR, then coverage determination (assigning the claim a policy tier), then payout calculation using tier-specific rates. Coverage determination occasionally assigns a tier the customer's policy does not include, and payout silently uses the wrong rate table. The team proposes enriching the coverage prompt with more worked examples. What is the better approach?",
+opts:["Adopt the proposal: more worked examples will reduce tier-assignment errors at the source",
+"Merge coverage determination and payout calculation into one prompt so the model sees rates while assigning tiers",
+"Between the two stages, verify the assigned tier against the policy record and route mismatches to review before any payout math runs",
+"Run coverage determination three times and take the majority tier"],
+ans:[2],
+ex:["Examples may lower the error rate, but any error that still occurs cascades silently into a wrong payout. Improving the upstream step never closes the boundary.",
+"Merging creates one diluted prompt doing two jobs and makes failures harder to attribute — the opposite of focused steps.",
+"Correct. Errors cascading between chained steps call for validation at the step boundary — here a deterministic check against the policy record, which is authoritative. Mismatches are caught before they become money.",
+"Majority voting triples cost to reduce, not eliminate, the error rate — and a consistent misreading wins all three votes. The boundary stays open."]},
+
+{id:"Q11",d:5,sc:0,q:"Mid-claim, the agent finds the policy supports two defensible coverage interpretations that differ by $18,000 in payout. Support policy lists 'material ambiguity in policy interpretation' as an escalation trigger. The model's reasoning favors one interpretation with high confidence. What should the agent do?",
+opts:["Proceed with the higher-confidence interpretation, since escalating routine ambiguity wastes adjuster time",
+"Escalate to a human adjuster, presenting both interpretations and the evidence for each",
+"Ask the claimant which interpretation they prefer before deciding",
+"Choose the interpretation with the lower payout to be safe, and note the ambiguity in the record"],
+ans:[1],
+ex:["Model confidence is not an escalation criterion, and this is not routine: the defined policy trigger — material ambiguity — has fired. Confidence does not override policy.",
+"Correct. A stated escalation trigger has been met; the agent escalates on policy, not on its own judgment. Packaging both interpretations with evidence makes the handoff useful rather than a raw dump.",
+"The claimant is an interested party, not the interpretive authority — this invites the higher payout every time.",
+"Systematically choosing against the customer under ambiguity is a fairness and compliance failure, and it substitutes an invented rule for the actual policy: escalate."]},
+
+{id:"Q12",d:5,sc:0,q:"On long multi-document claims, the agent's final decisions increasingly misstate details established early in the session — dates, deductibles, prior contact. The context is large but within limits. What is the most effective mitigation?",
+opts:["Maintain a structured case-facts block — key established facts, updated as they change — re-presented near the point of decision",
+"Switch to a model variant with a context window twice the size",
+"Summarize the entire session so far into one paragraph and continue from only that paragraph",
+"Instruct the model to 'pay close attention to earlier details' before deciding"],
+ans:[0],
+ex:["Correct. This is positional degradation — content buried mid-context gets less attention. A maintained case-facts block puts decision-critical facts where attention is strongest, at the time they matter. It is the standard discipline for long-running case work.",
+"A bigger window adds more middle for facts to get lost in; it does not change where attention concentrates.",
+"A single lossy paragraph discards the precise details — deductibles, dates — that are exactly what is being misstated.",
+"An exhortation does not relocate information; attention follows position and structure, not politeness."]},
+
+// ---------- S2 OrbitDesk ----------
+{id:"Q13",d:1,sc:1,q:"The support agent spawns a billing-specialist subagent for invoice disputes. Engineers notice the subagent frequently asks the customer for details already provided earlier in the conversation. What is the most likely cause?",
+opts:["The subagent's temperature is too high, making it forget prior turns",
+"Subagents do not inherit the parent's conversation context; the parent must pass the relevant established facts explicitly in the task brief",
+"The billing tools are returning errors that erase conversational memory",
+"The customer's messages are too long and are being truncated by the API"],
+ans:[1],
+ex:["Temperature affects sampling variety, not access to context. The subagent never had the prior turns at all.",
+"Correct. A subagent starts with a fresh context containing only what the parent hands it. If the dispute details, account identifiers, and history aren't in the task brief, the subagent's only recourse is to re-ask. Design the handoff contract to carry established facts forward.",
+"Tool errors do not delete context, and the pattern — re-asking for known facts — points to facts never being present.",
+"Truncation of incoming messages would show different symptoms and would affect the parent too."]},
+
+{id:"Q14",d:1,sc:1,q:"The agent occasionally answers questions about a discontinued product line OrbitDesk no longer supports, sometimes inventing plausible-sounding guidance. A proposal on the table: add a second 'scope reviewer' agent that inspects every draft reply. What is the better alternative?",
+opts:["Adopt the reviewer agent — a second model catching the first's mistakes is defense in depth",
+"Constrain the existing agent: explicit in-scope/out-of-scope criteria with the discontinued line named, a defined refusal-and-redirect behavior, and knowledge-base search restricted to supported products",
+"Fine-tune a custom model on transcripts so it learns the supported product boundary",
+"Expand the knowledge base to include the discontinued product docs so answers are at least accurate"],
+ans:[1],
+ex:["A reviewer agent doubles cost and latency, is itself probabilistic, and treats the symptom. The scope boundary can be stated and enforced far more cheaply.",
+"Correct. Constrain before you add: name the boundary explicitly, define what the agent does at the boundary, and narrow the tool surface so out-of-scope retrieval can't feed invention. Cheapest mechanism that addresses the failure directly.",
+"Fine-tuning is a heavyweight, slow-to-update mechanism for a boundary that can be expressed in criteria and tool restrictions — and it still isn't a guarantee.",
+"Making the agent better at answering unsupported questions moves in the wrong direction: the business decision is not to support them."]},
+
+{id:"Q15",d:1,sc:1,q:"A product manager wants to split the support agent into five specialist agents (returns, billing, technical, shipping, account) with a router in front. The five areas share most tools, volume is moderate, and current per-topic accuracy is roughly uniform. What is the right call?",
+opts:["Build the five-agent system — specialization always improves quality",
+"Keep a single agent with clear per-topic criteria and routing logic inside its prompt; split only if a topic demonstrably needs isolated context or diverging tools",
+"Build the five agents but have them all share one context window to keep coordination simple",
+"Replace the agent with five human-curated FAQ flows to remove model risk entirely",],
+ans:[1],
+ex:["Specialization pays when contexts or toolsets genuinely diverge. Here they don't — five agents buy routing errors, duplicated maintenance, and handoff seams for no measured gain.",
+"Correct. With shared tools, uniform accuracy, and moderate volume, splitting adds coordination cost and new failure modes without addressing any observed failure. Constrain, don't add — and keep the split as a documented future option with a trigger condition.",
+"Shared context across five agents removes the main benefit a split could offer (isolation) while keeping all the added complexity.",
+"Abandoning the agent entirely doesn't follow from the facts — nothing indicates the current system is failing."]},
+
+{id:"Q16",d:1,sc:1,multi:true,q:"Which TWO of the following are valid escalation triggers for the support agent, per sound escalation design? (Select TWO)",
+opts:["The customer explicitly asks to speak to a human",
+"Sentiment analysis scores the customer's message as very angry",
+"The defined threshold of three failed resolution attempts on the same issue is reached",
+"The model reports low confidence in its draft reply"],
+ans:[0,2],
+ex:["Valid. An explicit request for a human is a policy trigger and fires immediately, regardless of how solvable the issue looks.",
+"Sentiment is an unreliable, gameable proxy — frustration language appears in messages the agent can resolve, and calm messages can hide critical issues. Escalate on policy events, not emotional-state inference.",
+"Valid. A counted, defined workflow threshold is exactly what a policy trigger looks like: objective, auditable, and consistent.",
+"Self-reported model confidence is not calibrated policy — it fluctuates with phrasing and would fire arbitrarily. Confidence can inform routing analytics, not gate escalation."]},
+
+{id:"Q17",d:2,sc:1,q:"Telemetry shows the agent rarely calls search_kb, and when it does, its queries are single vague words. The tool is defined as search_kb(q: string) with the description 'Searches the knowledge base.' What is the highest-leverage fix?",
+opts:["Rewrite the tool contract: describe when to use it, what makes a good query, what it returns, and include one or two example calls; name the parameter meaningfully",
+"Force tool_choice to 'any' so the model is compelled to use tools more often",
+"Increase the number of search results returned so vague queries still surface something useful",
+"Add a system-prompt line: 'Remember to search the knowledge base frequently'"],
+ans:[0],
+ex:["Correct. The model selects and parameterizes tools from their contracts. A one-line description with an opaque parameter gives it nothing to reason with. A well-written contract — purpose, when-to-use, argument semantics, examples — is the primary lever for tool-use quality.",
+"'any' forces some tool call on turns where tools may not be needed at all, and does nothing to improve query quality.",
+"Compensating downstream for bad queries treats the symptom and bloats context with marginal results.",
+"Frequency exhortations don't teach the model when the tool applies or how to query it well."]},
+
+{id:"Q18",d:2,sc:1,q:"OrbitDesk wants support engineers (human users of the client app) to be able to attach specific policy documents — refund policy, SLA terms — into a session for the model to reference. The documents are read-only reference material selected by the human, not fetched by the model. Which MCP primitive fits?",
+opts:["Tools, so the model can fetch whichever policy it decides is relevant",
+"Resources, exposing each document as user-attachable read-only content",
+"Prompts, templating each policy's text into a reusable prompt",
+"A custom sampling endpoint that streams the documents into every request"],
+ans:[1],
+ex:["Tools are model-invoked actions. The stated design is human-selected reference material — modeling it as a tool changes who controls attachment.",
+"Correct. Resources are exactly this: application-controlled, read-only content that users attach into context. The selection stays with the human, and the server just exposes the documents.",
+"Prompts are reusable prompt templates users invoke — a way to start or shape interactions, not a container for reference documents.",
+"There is no such primitive in this design, and always-streaming every policy wastes context on unattached documents."]},
+
+{id:"Q19",d:3,sc:1,q:"Support team leads run the same morning workflow in Claude Code: pull overnight ticket stats, categorize failures, and produce a triage report in a fixed format. Today each lead re-types the instructions. What is the right mechanism?",
+opts:["A custom slash command checked into .claude/commands that encapsulates the triage workflow as a reusable parameterized prompt",
+"A longer CLAUDE.md that includes the full triage instructions so they load every session",
+"A shared text file leads copy-paste from each morning",
+"A cron job that emails leads the instructions at 8 a.m."],
+ans:[0],
+ex:["Correct. A repeatable, on-demand workflow is what slash commands are for: invoked when needed, versioned with the repo, consistent across users, and parameterizable (e.g., date range).",
+"CLAUDE.md loads into every session's context whether or not triage is happening — paying a context tax on unrelated work. It's for standing conventions, not on-demand procedures.",
+"Copy-paste preserves all the friction and drift the team is trying to remove.",
+"Delivering instructions by email still requires manual pasting and versions nothing."]},
+
+{id:"Q20",d:4,sc:1,q:"Every agent reply must begin with a one-line verdict tag like [RESOLVED] or [ESCALATED] that downstream tooling parses. The model reliably includes the tag but often writes a courteous preamble before it. Instructions to 'start directly with the tag' have plateaued at ~93% compliance. What is the most reliable fix?",
+opts:["Prefill the assistant response with the opening bracket so generation must continue from the tag position",
+"Raise the instruction's prominence with capital letters and repetition at the end of the system prompt",
+"Post-process replies with a regex that deletes any text before the first bracket",
+"Few-shot examples showing replies that start with the tag"],
+ans:[0],
+ex:["Correct. Prefilling the assistant turn constrains where generation begins — the preamble becomes structurally impossible rather than discouraged. It is the deterministic mechanism for output-start formatting.",
+"Prompt emphasis chases the last few percent of a probabilistic behavior; you already know instructions plateau here.",
+"Post-processing works until a tag appears inside quoted customer text or the model omits the tag entirely — and it adds a layer to fix output you can prevent.",
+"Examples raise compliance but remain probabilistic. When a structural guarantee is available at generation time, use it."]},
+
+{id:"Q21",d:4,sc:1,q:"A developer sets temperature to 0 on the reply-tone classifier, expecting deterministic settings to fix its misclassification of sarcastic messages as satisfied customers. Misclassifications persist. Why, and what actually helps?",
+opts:["Temperature 0 removes randomness, so the remaining errors must come from API bugs; file a support ticket",
+"Temperature controls sampling variability, not understanding; sarcasm errors are an ambiguity/criteria problem — add explicit criteria and contrastive examples of sarcastic vs. satisfied messages",
+"Temperature 0 is too rigid; raising it to 1.0 lets the model explore better interpretations",
+"The classifier needs a larger model; capability is the only lever for classification quality"],
+ans:[1],
+ex:["Determinism means the same wrong answer every time — it says nothing about correctness.",
+"Correct. Low temperature makes the model consistently pick its interpretation; if that interpretation is wrong, it is now reliably wrong. Sarcasm is an ambiguity problem: define the distinguishing signals and show contrastive examples so the boundary is learnable.",
+"Higher temperature adds variance, which sometimes lands right by luck — the opposite of a fix for a classification boundary.",
+"Model capability is one lever, but unexamined criteria are the cheaper, earlier one — and the failure pattern (systematic on one category) points to criteria, not capacity."]},
+
+{id:"Q22",d:5,sc:1,q:"When the knowledge base returns zero articles, and separately when the KB service returns HTTP 500, the agent tells customers 'I don't have information on that.' Which redesign is correct?",
+opts:["Have the agent apologize in both cases, since customers can't act on the difference anyway",
+"Treat the states distinctly: on empty results, answer from what is known and note the gap; on 500, retry with backoff and if exhausted, tell the customer there's a temporary system issue or escalate",
+"Suppress both cases by broadening every query until something is returned",
+"On any KB failure, immediately escalate to a human to be safe"],
+ans:[1],
+ex:["Customers act on it constantly — 'no info exists' ends the inquiry; 'temporary issue' invites retrying later. Collapsing the states misinforms them in one direction or the other.",
+"Correct. 'Found nothing' and 'the lookup failed' are different states with different correct behaviors: one is an answer, the other is a transient fault with a retry path. Distinct handling is the whole principle.",
+"Broadening until something matches manufactures relevance and buries the real state — including genuine outages.",
+"Escalating every empty search result floods humans with non-issues; escalation is for policy triggers, not for any imperfect tool result."]},
+
+{id:"Q23",d:5,sc:1,q:"Each request re-sends a large stable prefix — the support system prompt, policy text, and 30 tool definitions — followed by the live conversation. Latency and cost are climbing. What is the right use of prompt caching?",
+opts:["Mark the stable prefix (tools, system prompt, policy text) with cache_control so it is cached, keeping volatile content strictly after the cached prefix",
+"Cache the customer's messages, since they are the largest part of long conversations",
+"Insert the current date and ticket ID at the top of the system prompt, then cache the whole prompt",
+"Caching is automatic for all requests; no changes are needed"],
+ans:[0],
+ex:["Correct. Caching works on stable prefixes: identical leading content is reused across requests. Order content stable-to-volatile, mark the boundary with cache_control, and the big fixed block stops being reprocessed every turn.",
+"Conversation turns change every request — they are the volatile suffix, precisely what cannot be usefully cached.",
+"A changing date or ID at the top invalidates the prefix on every request, defeating the cache entirely. Volatile content must come after the cached block.",
+"Caching requires explicit cache_control breakpoints; assuming it is automatic leaves the savings unrealized."]},
+
+{id:"Q24",d:5,sc:1,q:"Replies scoring above a calibrated confidence threshold are auto-sent, saving reviewer time. Leadership asks how the team will notice if quality of auto-sent replies drifts as products and customers change. What is the right safeguard?",
+opts:["Trust the calibration — it was validated on labeled data at launch",
+"Maintain ongoing stratified random sampling of auto-sent replies across topics for human review, tracking the sampled error rate over time",
+"Raise the auto-send threshold every quarter as a safety margin",
+"Re-review every auto-sent reply weekly until confidence in the system is established"],
+ans:[1],
+ex:["Calibration is a snapshot of the launch distribution. Products, phrasing, and customers shift; the threshold's meaning silently shifts with them.",
+"Correct. Ongoing stratified sampling is the standing instrument for detecting drift in the traffic that bypasses review — small, budgeted, spread across strata so a degrading topic can't hide, with a trend line leadership can actually read.",
+"Ratcheting the threshold degrades the automation win indiscriminately and still measures nothing — you'd be flying blind with a smaller autopilot.",
+"Reviewing everything erases the 60%-style savings the system exists to produce; sampling buys detection at a fraction of the cost."]},
+
+// ---------- S3 LedgerLens ----------
+{id:"Q25",d:1,sc:2,q:"Privileged legal documents must be redacted by the redaction service before any content is sent to the extraction model. The pipeline prompt instructs this ordering, but audit logs show 1 in 400 privileged documents reached extraction unredacted. What is the required fix?",
+opts:["Strengthen the ordering instruction and add it to the extraction step's prompt as well",
+"Enforce the order programmatically: the extraction step's input interface only accepts documents carrying a verified redaction-complete marker",
+"Add a post-extraction scan that deletes any privileged content found in outputs",
+"Reduce batch sizes so the model can track document state more reliably"],
+ans:[1],
+ex:["A 1-in-400 leak of privileged material is a compliance breach, not a quality dip. Instructions can lower the rate; they cannot take it to zero, which is the requirement.",
+"Correct. An always-hold ordering rule over irreversible exposure needs a structural gate: extraction physically cannot receive unredacted privileged input. The prompt becomes irrelevant to the guarantee.",
+"Post-hoc deletion happens after the exposure — the privileged content already reached the model and the logs. The gate must sit before the boundary.",
+"Batch size does not change the enforcement mechanism; the ordering remains probabilistic at any size."]},
+
+{id:"Q26",d:1,sc:2,q:"A proposal suggests rebuilding the fixed four-step transform (split → classify → extract → post) as an autonomous agent that decides its own steps with a full toolset, 'for flexibility.' Throughput and auditability are the top requirements; the steps never vary. What is the right architecture?",
+opts:["The autonomous agent — model-directed control flow is strictly more capable",
+"A coded pipeline that calls the model within each fixed step, reserving agentic control flow for steps that genuinely require decisions",
+"A hybrid where the agent decides step order but a prompt asks it to usually follow the standard order",
+"Two autonomous agents that check each other's step choices"],
+ans:[1],
+ex:["Capability you don't need is risk you do: an agent can reorder, skip, or repeat steps — every one of which is a new failure mode in a workflow with exactly one correct shape.",
+"Correct. When control flow is known and fixed, encode it in code: deterministic, auditable, cheaper. Spend model capacity inside the steps (classification, extraction), where judgment actually lives. Agency is a tool for open-ended decisions, not a default.",
+"'Usually follow the standard order' converts a guarantee into a suggestion — the worst of both designs.",
+"Doubling the agents doubles the nondeterminism and cost while the requirement remains a fixed sequence."]},
+
+{id:"Q27",d:2,sc:2,q:"The extraction tool schema defines amounts as a free-text string field ('e.g. $1,200.00 USD'). Downstream systems keep breaking on format variants. What is the correct schema-level fix?",
+opts:["Keep the string field but add more formatting examples to the extraction prompt",
+"Type the contract in the schema: numeric value, ISO currency code from an enum, and required fields marked required, so malformed extractions fail validation instead of flowing downstream",
+"Have downstream systems adopt a tolerant parser that accepts common variants",
+"Ask the model to double-check its formatting before finalizing each extraction"],
+ans:[1],
+ex:["Prompt examples improve the average but leave the contract loose — every variant that slips through still breaks downstream.",
+"Correct. The schema is the contract. Typed fields with constraints make conformance checkable at the boundary: bad output is rejected there, not discovered in accounting. This is what structured output is for.",
+"Tolerant parsing spreads the looseness into every consumer and ratifies the ambiguity instead of ending it.",
+"Self-checking is another probabilistic layer; the schema can simply make the malformed shape unrepresentable."]},
+
+{id:"Q28",d:2,sc:2,q:"When a document's format is unsupported, the parse tool raises a generic exception. The agent interprets it as transient and retries the same document up to its retry limit on every run, wasting cycles. What should change?",
+opts:["Raise the retry limit so the document eventually parses",
+"Return a structured, non-retryable error — e.g. {code:'UNSUPPORTED_FORMAT', retryable:false, detail:...} — so the agent routes the document to the human queue immediately",
+"Catch the exception and return an empty result so the agent moves on quietly",
+"Have the agent wait longer between retries to reduce load"],
+ans:[1],
+ex:["No number of retries parses a format the parser doesn't support; the limit isn't the problem, the signal is.",
+"Correct. Tool errors are part of the contract. Distinguishing retryable from non-retryable in the returned structure lets the agent do the right thing per state: retry transient faults, route permanent ones to humans with a reason attached.",
+"An empty result collapses 'unsupported' into 'nothing found' — the document silently vanishes from the pipeline, which is worse than the retry loop.",
+"Backoff pacing optimizes a loop that should not be running at all for this error class."]},
+
+{id:"Q29",d:3,sc:2,q:"The nightly extraction regression suite should run Claude Code non-interactively in CI: execute the eval script, compare accuracy to a baseline, and emit a machine-readable result. What is the right invocation pattern?",
+opts:["Run claude in headless print mode (-p) with the task prompt, a restricted allowedTools list for the job, and structured (JSON) output for the pipeline to parse",
+"Run an interactive session on a build machine and have an engineer approve each tool call remotely",
+"Pipe the task into an interactive session with auto-accept for all permissions and full tool access",
+"Have CI call the Messages API directly, reimplementing the file and shell handling the task needs"],
+ans:[0],
+ex:["Correct. Headless print mode is the CI-shaped invocation: non-interactive, scriptable, with permissions declared up front via a minimal allowedTools set and output the pipeline can parse.",
+"A human approving calls at 2 a.m. defeats automation; the job's tool needs are known in advance and should be declared, not approved live.",
+"Full tool access with blanket auto-accept grants far more than the job needs — permission scope should match the task, especially unattended.",
+"Rebuilding Claude Code's execution environment around the raw API is wasted engineering when the headless mode exists for exactly this."]},
+
+{id:"Q30",d:4,sc:2,q:"After extraction and validation tools have run, a final turn should produce a plain-language summary for the case file. With tools still attached and tool_choice 'auto', the model sometimes issues another needless tool call instead of writing the summary. What is the cleanest fix for that turn?",
+opts:["Set tool_choice to 'any' to make its behavior consistent",
+"On the synthesis turn, set tool_choice to 'none' (or send the request without tools) so a text response is guaranteed",
+"Add an instruction: 'Do not call tools at this stage'",
+"Force tool_choice to the validate tool so at least the call is harmless"],
+ans:[1],
+ex:["'any' guarantees a tool call — the exact opposite of what the synthesis turn needs.",
+"Correct. tool_choice has four modes for a reason: 'none' (or omitting tools) is the mode that guarantees prose when the tool-using phase is over. Configuration, not persuasion.",
+"Instructions under 'auto' remain probabilistic; the API-level parameter exists to make this deterministic.",
+"Forcing a pointless call costs latency and money every turn and still doesn't produce the summary on that response."]},
+
+{id:"Q31",d:4,sc:2,q:"The pipeline classifies each document, then routes it to a type-specific extractor. A new statement type was added last month; since then, occasional misclassifications send documents to the wrong extractor, producing subtly wrong records that surface weeks later in reconciliation. What is the structural fix?",
+opts:["Expand the classifier's examples to cover the new type more thoroughly",
+"At the classify→extract boundary, validate the label: check it against the allowed set for the document's source, apply a confidence floor, and divert failures to review before extraction runs",
+"Merge classification into each extractor so every extractor decides for itself whether the document is its type",
+"Add a weekly reconciliation report that catches wrong records sooner"],
+ans:[1],
+ex:["Better coverage lowers the misclassification rate but leaves the boundary open — the errors that remain still flow silently into wrong-field extraction.",
+"Correct. This is the cascading-error signature, and the fix lives at the step boundary: verify the classification before it becomes an irreversible routing decision, and divert uncertainty to review. Upstream improvement is the perennial distractor.",
+"Every extractor re-deciding type multiplies the classification surface and creates conflicting judgments — structure moving backwards.",
+"Faster detection of damage is not prevention; records are still wrong and reconciliation still eats the cost."]},
+
+{id:"Q32",d:4,sc:2,q:"A legacy component prompts the model for JSON with formatting instructions and receives malformed JSON roughly 2% of the time — trailing commas, unquoted keys, commentary before the object. What is the correct modernization?",
+opts:["Add a repair layer that fixes common JSON mistakes before parsing",
+"Move the output to tool_use with a typed schema so the structure is produced through the tool-call mechanism rather than free text",
+"Lower temperature and add 'return ONLY valid JSON' in three places",
+"Retry each malformed response until valid JSON is returned"],
+ans:[1],
+ex:["Repair layers are an arms race with an open-ended space of malformations, and they can silently 'fix' output into wrong values.",
+"Correct. Invalid JSON is a solved category: schema-backed tool use generates structure through a constrained mechanism instead of hoping prose formatting holds. Prompt-based JSON is never the answer when tool use is available.",
+"These reduce the rate; the failure class remains. A structural mechanism exists — use it.",
+"Retrying pays 1–2 extra calls on every failure forever and still offers no guarantee on any given document."]},
+
+{id:"Q33",d:4,sc:2,q:"Extractions now pass schema validation, but reconciliation still flags records where line items don't sum to the stated invoice total, or dates precede the contract's own execution date. What is the right next layer?",
+opts:["Tighten the JSON schema further with stricter types and patterns",
+"Add semantic validation rules — cross-field checks like sums and date ordering — and on failure, retry the extraction with the specific violation fed back",
+"Add more few-shot extraction examples that happen to have consistent totals",
+"Route every extraction to human review, since validation has proven insufficient"],
+ans:[1],
+ex:["The outputs are schema-valid; the errors live in relationships between fields, which JSON Schema cannot express. Tightening types doesn't touch the failure.",
+"Correct. Valid-but-wrong output is the semantic-validation row: encode the domain invariants as checks, and make the retry targeted by returning the specific violation — a feedback loop, not a blind re-roll.",
+"Examples nudge averages; they cannot enforce an arithmetic invariant on any specific document.",
+"Total human review abandons the automation over a gap that a cheap deterministic check closes."]},
+
+{id:"Q34",d:4,sc:2,q:"LedgerLens must reprocess 40,000 archived contracts with an improved extraction prompt. There is no latency requirement — results are needed within a few days — and cost is the main constraint. What is the right mechanism?",
+opts:["Submit the jobs through the Batch API, accepting asynchronous completion in exchange for substantially lower per-token cost",
+"Run maximum-concurrency real-time requests to finish as fast as possible",
+"Rely on prompt caching to make real-time reprocessing cheap, since the prompt is shared",
+"Spread real-time requests over several weeks to stay under rate limits"],
+ans:[0],
+ex:["Correct. Large volume, no latency need, cost-sensitive: the Batch API's profile exactly — asynchronous processing at a significant per-token discount, with results well inside the window.",
+"Maximum-speed real-time processing pays full price for latency nobody asked for.",
+"Caching discounts the shared prefix only; each contract's content — the bulk of the tokens — is unique and uncached. It complements batching; it doesn't replace it.",
+"Stretching real-time calls over weeks blows the deadline and still pays real-time rates."]},
+
+{id:"Q35",d:5,sc:2,q:"To fit long contracts into context, the pipeline summarizes each section, then summarizes the summaries. Extractions increasingly miss defined terms — 'Effective Date', indemnification carve-outs — that were defined once early and referenced throughout. What is the right context strategy?",
+opts:["Add a third summarization pass with instructions to preserve important details",
+"Extract definitions and critical clauses verbatim into a persistent reference block that accompanies every section-level task, and summarize only the remaining narrative",
+"Increase each summary's length limit by 50%",
+"Process the document in one giant context with no summarization, accepting degraded attention"],
+ans:[1],
+ex:["Another lossy pass over lossy input compounds the problem — recursion is the trap here, not the escape.",
+"Correct. The failure is progressive summarization destroying load-bearing exact language. Pin what must survive verbatim — definitions, carve-outs — and let compression apply only to what tolerates it. Verbatim-critical plus summarized-narrative is the standard split.",
+"Longer summaries dilute the loss but the mechanism — paraphrase of paraphrase — still erodes defined terms.",
+"One giant context trades a known failure for lost-in-the-middle degradation on exactly the scattered references at issue."]},
+
+{id:"Q36",d:5,sc:2,q:"A new client begins submitting scanned faxes — a document source LedgerLens has never processed. The extraction model reports high confidence on them, and no ongoing sampling program currently exists. The auto-approval threshold was calibrated on the original digital-document mix. What is the appropriate safeguard?",
+opts:["Trust the threshold — 92% confidence exceeds the calibrated 90% bar regardless of source",
+"Route the new source through mandatory human review while collecting labeled outcomes, then admit it to auto-approval once its error rate is measured against the bar",
+"Raise the global threshold to 97% for all documents until the faxes prove themselves",
+"Reject scanned faxes as unsupported input"],
+ans:[1],
+ex:["Calibration is only valid for the distribution it was measured on. On an unseen source, the score's relationship to accuracy is unknown — the model can be confidently wrong precisely because it doesn't recognize its unfamiliarity.",
+"Correct. Out-of-distribution input gets reviewed until its real error rate is measured; then the data, not the score, earns it auto-approval. Temporary review plus measurement is the proportionate safeguard when no sampling program already covers this.",
+"A global raise punishes well-calibrated document types, wastes reviewer capacity on documents that don't need it, and still measures nothing about faxes specifically.",
+"The client's business is real and the pipeline can likely handle faxes — the gap is unmeasured risk, which review-and-measure addresses without refusing revenue."]},
+
+// ---------- S4 FleetForge ----------
+{id:"Q37",d:1,sc:3,q:"Policy: Claude Code must never run 'git push --force' on shared branches and must never modify files under /infra, in any session, for any engineer. Where must this be enforced?",
+opts:["A prominent section in the root CLAUDE.md stating both prohibitions",
+"A PreToolUse hook that inspects Bash and file-edit tool calls and deterministically denies matches, with CLAUDE.md explaining the policy for context",
+"Each engineer's personal settings, since work styles differ",
+"A PostToolUse hook that reverts force-pushes and /infra edits after they happen"],
+ans:[1],
+ex:["CLAUDE.md is context, not enforcement — the model can weigh instructions against a persuasive task framing. 'Never, for anyone' is not a weighing matter.",
+"Correct. Deterministic denial before execution is what PreToolUse hooks are for: the call is blocked regardless of what the model believes. Keeping the policy in CLAUDE.md too helps the model plan around it, but the guarantee lives in the hook.",
+"A per-engineer setting makes an organizational invariant optional — exactly what it must not be.",
+"After a force-push has rewritten shared history or infra has been touched, reverting is cleanup of damage the policy exists to prevent. Enforcement must precede execution."]},
+
+{id:"Q38",d:1,sc:3,q:"Two more proposed guardrails: (1) 'Never commit files containing credentials or API keys' and (2) 'Prefer conventional-commit message format.' The team wants both as blocking hooks. What is the correct design?",
+opts:["Hook both — commit hygiene and secret safety both improve with enforcement",
+"Hook rule 1 with a secret scanner that blocks the commit; leave rule 2 as a CLAUDE.md convention, since an unconventional message is trivially recoverable",
+"Prompt both — hooks are overkill for anything git-related since git history can be rewritten",
+"Hook rule 2 (formats are checkable) and prompt rule 1 (secrets are contextual)"],
+ans:[1],
+ex:["A blocking hook on message style interrupts work over a cosmetic, amendable detail. Enforcement should be spent where failure is expensive.",
+"Correct. Severity decides the mechanism: a leaked credential is a security incident the moment it lands in history — deterministic blocking is warranted. A message format is a recoverable preference where high prompt compliance is fine.",
+"'History can be rewritten' fails for secrets — pushed credentials must be treated as compromised regardless of later rewrites. Rule 1 is exactly the irreversible case.",
+"This inverts the mapping: it hard-enforces cosmetics and leaves the security boundary probabilistic. Checkability is not the criterion; consequence is."]},
+
+{id:"Q39",d:1,sc:3,q:"An overnight autonomous Claude Code run is asked to 'migrate the logging library across the repo.' Some mornings it has stopped early claiming success with dozens of files unmigrated; other mornings it kept 'improving' unrelated code. What is the right structural change?",
+opts:["Give the run a bigger token budget so it can finish everything it starts",
+"Define the task with explicit completion criteria (e.g. zero remaining old-API references), scope boundaries, a turn/budget cap, and a final verification step the run must pass before reporting success",
+"Split the migration across five parallel autonomous agents to finish before it can drift",
+"Add 'be thorough and stay focused' to the prompt"],
+ans:[1],
+ex:["Budget doesn't define done — a run with no completion criterion can stop early or wander at any budget.",
+"Correct. Autonomous runs need an operational definition of done, edges they may not cross, a cap that bounds the damage of drift, and verification that converts 'the model says it finished' into 'a check confirms it finished.'",
+"Five agents with the same undefined finish line drift five ways and collide in shared files. Structure first, parallelism later if needed.",
+"Exhortation is not structure; the failure modes are architectural, not motivational."]},
+
+{id:"Q40",d:2,sc:3,q:"Platform is building an MCP server over the internal deploy API. One camp proposes a single http_request(method, path, body) tool covering every endpoint; the other proposes narrow tools like deploy_service(service, version, env) and rollback_service(service, env). Deploys to production are consequential. Which is right, and why?",
+opts:["The generic HTTP tool — fewer tools means simpler selection for the model",
+"Narrow, intent-named tools with typed parameters: the model selects by purpose, schemas validate arguments, and consequential verbs are individually gateable and auditable",
+"The generic tool, but with very detailed documentation of every endpoint in its description",
+"Both, so the model can choose whichever style fits the moment"],
+ans:[1],
+ex:["A raw HTTP tool makes every API endpoint reachable through one ungoverned door and pushes all correctness into free-form path and body strings.",
+"Correct. Tool design is contract design: intent-level tools carry meaning the model can reason over, typed schemas reject malformed calls, and a hook can gate rollback_service to prod specifically — impossible to express cleanly against arbitrary HTTP.",
+"Documentation doesn't restore validation or gateability; the contract is still one stringly-typed door to everything.",
+"Offering both keeps the ungoverned path available, which defeats the point of governing anything."]},
+
+{id:"Q41",d:2,sc:3,q:"Two connected MCP servers each expose a tool named 'search' — one searches the code index, the other searches the incident tracker. The model regularly queries the wrong one. What is the right fix?",
+opts:["Give the tools distinct, purpose-bearing identities — e.g. search_code_index and search_incidents — with descriptions stating what each covers and when to use it",
+"Instruct in CLAUDE.md: 'be careful to pick the correct search tool'",
+"Remove one server so only a single 'search' exists",
+"Have the model call both searches every time and merge results"],
+ans:[0],
+ex:["Correct. Tool selection runs on names and descriptions; two identical names with overlapping verbs give the model nothing to select on. Distinct terminology at the source removes the collision — the same root-cause move as fixing keyword overlap in prompts.",
+"Care-based instructions can't disambiguate signals that are literally identical.",
+"Both capabilities are needed; deleting one trades a naming bug for missing functionality.",
+"Calling both doubles cost and context on every search and still leaves the model to guess which results are authoritative."]},
+
+{id:"Q42",d:3,sc:3,q:"An engineer new to payment-compliance work must build a reconciliation feature. They know the codebase well but are openly unsure what regulatory constraints should shape the design. Which Claude Code technique fits the start of this work?",
+opts:["Plan mode, so Claude explores the codebase and proposes reconciliation architectures",
+"The interview pattern: Claude asks structured clarifying questions about regulatory constraints, data retention, and audit requirements before any design is proposed",
+"Direct execution from a detailed spec the engineer writes today",
+"Few-shot examples of reconciliation code from other fintech repos"],
+ans:[1],
+ex:["Plan mode evaluates implementation approaches once requirements are understood. This engineer's gap is the requirements themselves — plan mode would architect confidently on top of unknown constraints.",
+"Correct. Unknown requirements is the interview pattern's home turf: probing questions surface constraints the engineer doesn't know to state, before a line of design exists. What's unknown decides the technique — here it's the requirements, not the approach.",
+"A spec written today encodes today's ignorance of the compliance landscape.",
+"Example code transfers patterns, not the regulatory knowledge that determines which patterns are even legal here."]},
+
+{id:"Q43",d:3,sc:3,q:"Debugging a flaky integration test, an engineer runs Claude Code in plan mode to trace timing across services. Forty minutes in, the investigation pins the cause to one wrong timeout value in a config file. What is the optimal next step?",
+opts:["Remain in plan mode and have Claude produce a full remediation plan for the one-line change",
+"Switch to direct execution within the same session and apply the fix, keeping the accumulated investigation context",
+"End the session and start a fresh one with write permissions for a clean fix",
+"Restrict allowedTools to config-file edits only, then continue planning"],
+ans:[1],
+ex:["Planning overhead for a scoped one-line change is ceremony — the understanding plan mode exists to build has already been built.",
+"Correct. Hybrid workflow: plan mode for investigation, then a mode switch in-session for the well-understood fix. The session's accumulated context — traces, hypotheses, the reasoning that found the value — stays available while the edit is applied.",
+"A new session discards everything the forty minutes produced; if the fix needs any judgment, that context is gone.",
+"Permission surgery mid-task adds friction without addressing the actual transition — from investigating to executing a known change."]},
+
+{id:"Q44",d:3,sc:3,q:"A security engineer must produce a written audit of the payment module: read code, trace data flows, produce a report. Org policy for audit sessions is that no repository modification may be possible, regardless of what the session encounters. How should the session be configured?",
+opts:["Run normally and instruct Claude in the prompt not to modify anything",
+"Configure the session with a read-only allowedTools set (read, search, report output) so write and execute tools are unavailable by construction",
+"Run with full tools but review the diff afterward to confirm nothing changed",
+"Use plan mode, since it discourages modifications during analysis"],
+ans:[1],
+ex:["'May not be possible' is a policy about capability, not behavior — instructions govern behavior.",
+"Correct. When policy forbids the capability itself, remove the capability: a session whose tool surface contains no write or execute tools cannot modify the repo no matter what it encounters. Configuration is the guarantee.",
+"After-the-fact diff review detects violations of a policy that required prevention.",
+"Plan mode shapes workflow intent; it is not the mechanism for a hard capability boundary. allowedTools is."]},
+
+{id:"Q45",d:3,sc:3,q:"The monorepo hosts four packages with conflicting conventions — the payments package forbids floating-point money math that the analytics package uses freely. A single root CLAUDE.md listing every package's rules is causing cross-contamination. What is the right structure?",
+opts:["One root CLAUDE.md with a clearly labeled section per package",
+"Nested CLAUDE.md files: shared conventions at the root, package-specific rules in each package directory, loaded when working in that part of the tree",
+"Per-engineer CLAUDE.md variants matching whichever package each person mostly touches",
+"Move all conventions into the system prompt of a custom API integration"],
+ans:[1],
+ex:["Labeled sections still all load everywhere — payments rules weigh on analytics sessions and vice versa, which is the contamination being observed.",
+"Correct. Memory files compose hierarchically: root for what's universal, per-directory files for what's local, each loaded in its own scope. The payments rules bind in payments and are absent elsewhere.",
+"Engineers cross packages constantly; per-person variants guarantee the wrong rules travel with the person.",
+"Abandoning Claude Code's config model for a custom integration rebuilds existing functionality and loses directory scoping."]},
+
+{id:"Q46",d:3,sc:3,q:"The root CLAUDE.md has grown to 2,400 lines: coding style, deploy runbooks, API reference tables, and onboarding docs. Sessions feel degraded and instructions get ignored. What is the right restructuring principle?",
+opts:["Convert the whole file to bullet points to make it easier for the model to scan",
+"Keep CLAUDE.md lean — standing rules the model needs every session — and move reference material into separate docs or skills that are pulled in only when a task needs them",
+"Split it into three files that are all still loaded at session start",
+"Duplicate the most important rules at both the top and bottom of the file"],
+ans:[1],
+ex:["Formatting doesn't change the token count or the attention dilution; 2,400 lines of bullets is still 2,400 lines in every context.",
+"Correct. Always-loaded context should carry only what every session needs; everything else becomes on-demand — fetched documents, skills with progressive disclosure. Instructions regain weight when they stop competing with an API reference.",
+"Three files loaded at start is the same context tax with extra filenames.",
+"Duplication grows the file further and trains the model that the document is redundant — the opposite of authority."]},
+
+{id:"Q47",d:3,sc:3,q:"A well-tested data migration must run unattended overnight via Claude Code. Options differ on permissions and isolation. Which setup is appropriate?",
+opts:["Run on the engineer's workstation with full permissions and auto-accept, since nobody is present to approve",
+"Run in an isolated container against a staging snapshot, with auto-accepted permissions scoped to the migration's tools and guard hooks blocking anything outside the migration's directories",
+"Run with manual approval required for each tool call, queuing overnight until morning",
+"Run on production directly — the migration is well-tested, and staging adds delay"],
+ans:[1],
+ex:["Blanket permissions on a host machine with no one watching maximizes blast radius exactly when oversight is lowest.",
+"Correct. Unattended autonomy is earned through containment: an isolated environment bounds the blast radius, scoped permissions match the task, hooks enforce the edges, and staging makes the worst case recoverable. Autonomy scales with the safety of the sandbox.",
+"Queuing on human approval defeats the overnight run — nothing executes until morning.",
+"'Well-tested' is precisely what staging validates against the real data shape; unattended-on-prod converts any surprise into an incident."]},
+
+{id:"Q48",d:4,sc:3,q:"Claude-generated PR review comments are inconsistent in labeling severity: the same class of issue is 'critical' in one review, 'nitpick' in the next. The team already added detailed instructions defining each severity level, with limited improvement. What is the most effective next step?",
+opts:["Add 2–4 few-shot example reviews spanning varied issue types, each labeled with its severity and a sentence of reasoning for the label",
+"Add a CI rule that rejects review comments whose severity labels look wrong",
+"Set temperature to 0 for review generation",
+"Have a second Claude pass re-grade every comment's severity"],
+ans:[0],
+ex:["Correct. Detailed instructions have been tried; inconsistent application of defined criteria is the cue for few-shot with reasoning — varied cases so the model generalizes the judgment rather than pattern-matching one shape. Teach at the source.",
+"A gate cannot mechanically know the 'right' severity, and gating never teaches — novel issue types keep getting mislabeled behind it.",
+"Determinism yields consistently applied misjudgment, not calibrated judgment; the criteria boundary is what needs teaching.",
+"A second model pass doubles cost to re-guess the same underspecified judgment; put the calibration into the generator."]},
+
+// ---------- S5 Atlas Research ----------
+{id:"Q49",d:1,sc:4,q:"Worker subagents return their complete raw findings — full page contents, all notes — to the orchestrator, whose context overflows on multi-source projects. What is the right fix?",
+opts:["Define an output contract for workers: structured summaries with claims, key quotes, and citations at a size budget, keeping raw material in each worker's own isolated context",
+"Move the orchestrator to a model with the largest available context window",
+"Have workers pass raw findings to each other directly, bypassing the orchestrator",
+"Reduce the number of sources per project to fit the orchestrator's window"],
+ans:[0],
+ex:["Correct. The point of worker isolation is that raw bulk stays with the worker; the orchestrator consumes distilled, structured results. Defining that interface — what comes back, in what shape, at what size — is orchestration design, not a workaround.",
+"A bigger window postpones the overflow one project size while keeping the orchestrator's attention diluted across raw dumps.",
+"Peer-to-peer raw exchange spreads the overflow to every agent and dissolves the coordination point.",
+"Shrinking the research to fit the plumbing sacrifices the product; fix the interface instead."]},
+
+{id:"Q50",d:1,sc:4,q:"When a worker subagent times out, and separately when a worker completes but finds no relevant sources, the orchestrator handles both identically by dropping that thread from the report. What should it do instead?",
+opts:["Drop both, but add a footnote that some threads were incomplete",
+"Handle the states distinctly: retry or reassign timeouts (transient failure), and record 'searched, nothing found' as a substantive result the report states explicitly",
+"Retry both cases until every thread returns at least one source",
+"Escalate both cases to a human researcher"],
+ans:[1],
+ex:["A footnote papers over the collapse; the two states still receive one behavior, and one of them is being handled wrongly.",
+"Correct. Timeout and empty are different findings: one is an operational fault with a retry path, the other is evidence — absence of sources is information the client should see. Distinct states, distinct handling.",
+"Retrying 'no sources exist' until sources appear either loops forever or pressures workers into scraping irrelevant material.",
+"Neither state meets an escalation trigger; routine operational handling covers both."]},
+
+{id:"Q51",d:1,sc:4,multi:true,q:"Which TWO are sound reasons to split a research task across worker subagents rather than run it in one agent? (Select TWO)",
+opts:["Each source requires heavy per-source context that would pollute a shared window",
+"The sources are independent and can be processed in parallel",
+"Subagents are inherently more accurate than a single agent using tools",
+"More agents demonstrates a more sophisticated architecture to stakeholders"],
+ans:[0,1],
+ex:["Valid. Context isolation is a core subagent benefit: each worker holds its own bulk material, and none of it dilutes the others or the orchestrator.",
+"Valid. Independence enables parallelism — concurrent workers cut wall-clock time in a way one sequential agent cannot.",
+"No such inherent accuracy advantage exists; a subagent is the same model in a narrower frame, and splitting adds handoff seams that can reduce accuracy.",
+"Architecture serves the workload, not the slide deck. Complexity unjustified by isolation or parallelism is pure liability."]},
+
+{id:"Q52",d:2,sc:4,q:"The fetch_source tool returns each webpage's entire content into the calling agent's context; long pages consume enormous token budgets for a few relevant paragraphs. What is the right tool-side change?",
+opts:["Have the tool return bounded, relevant content: extraction or truncation to a token budget, with pagination or section-targeting parameters for deliberate deeper reads",
+"Instruct agents to mentally skim long tool results and ignore irrelevant parts",
+"Raise every agent's max context so full pages fit comfortably",
+"Cache each fetched page so at least repeated fetches are cheap"],
+ans:[0],
+ex:["Correct. Tool results are context injections, and the tool controls the dose: return what serves the task, bounded and shaped, with parameters that make deeper reads an explicit choice rather than a default flood.",
+"Tokens are consumed at ingestion — 'ignoring' content doesn't refund its cost or the attention it dilutes.",
+"Raising limits accommodates the waste instead of ending it, at higher cost per call.",
+"Caching helps repeat fetches; the first read of every long page still floods the window."]},
+
+{id:"Q53",d:2,sc:4,q:"The save_finding tool writes a finding to the project store. Network retries sometimes cause the same finding to be saved two or three times, corrupting report statistics. What is the correct tool design fix?",
+opts:["Instruct agents to avoid retrying save operations",
+"Make the operation idempotent: require a client-supplied idempotency key (e.g. a finding ID) so replays of the same save are recognized and deduplicated server-side",
+"Add a nightly deduplication job over the findings store",
+"Have the tool sleep between retries so duplicates are less likely"],
+ans:[1],
+ex:["Retries on transient network failure are correct behavior; suppressing them trades duplicates for lost findings.",
+"Correct. Side-effecting tools in retry-prone environments should be idempotent by contract: the key makes 'save this finding' safe to repeat, which is the structural property the failure demands.",
+"Nightly cleanup means statistics are wrong all day, every day, and dedup-by-similarity guesses at what the key would have known.",
+"Pacing shrinks the window; it does not close it. Idempotency closes it."]},
+
+{id:"Q54",d:2,sc:4,q:"Analysts want a standard set of starting workflows — 'analyze this source', 'compare these two papers', 'draft a findings memo' — invokable by the human user from their client, each expanding into a vetted prompt with slots for the user's inputs. Which MCP primitive is this?",
+opts:["Tools — each workflow becomes a tool the model can call",
+"Prompts — user-invokable, parameterized prompt templates exposed by the server",
+"Resources — each workflow stored as an attachable document",
+"None; MCP has no primitive for this and each client must hardcode the templates"],
+ans:[1],
+ex:["Tools are model-invoked actions; these workflows are chosen by the human to start or steer an interaction — the control belongs to the user.",
+"Correct. The prompts primitive is exactly this: server-exposed, user-invocable templates with arguments, so vetted workflows are shared and versioned once rather than re-typed per analyst.",
+"Resources carry content into context; they don't parameterize or invoke a workflow.",
+"The primitive exists — prompts are one of MCP's three core primitives alongside tools and resources."]},
+
+{id:"Q55",d:3,sc:4,q:"Atlas wants a reusable 'source-verifier' worker in Claude Code: its own system prompt, a restricted tool set (fetch and read only), invoked by name from any session. What is the right mechanism?",
+opts:["Paste the verifier's instructions into the main session whenever verification is needed",
+"Define it as a custom subagent in .claude/agents with its own prompt and tool permissions, delegated to by name with its own context",
+"Put the verifier's instructions in CLAUDE.md so every session can act as the verifier",
+"Run a second full Claude Code session manually whenever verification is needed"],
+ans:[1],
+ex:["Pasting mixes the verifier's rules into the parent's context and forfeits both isolation and the restricted tool surface.",
+"Correct. Custom subagent definitions are exactly this mechanism: a named, versioned worker with its own system prompt, its own allowed tools, and isolated context, invocable wherever the workflow needs it.",
+"CLAUDE.md would impose verifier behavior on every session globally — the opposite of an on-demand specialist.",
+"A manually driven second session isn't composable or consistent; the definition belongs in configuration, not in operator habit."]},
+
+{id:"Q56",d:3,sc:4,q:"Converting findings into Atlas's client memo format is a recurring multi-step procedure: a template, a citation style, and a formatting script that must be run at the end. Analysts want Claude to perform it on demand without bloating every session. What is the right packaging?",
+opts:["A skill: instructions, the template, and the script bundled together, discovered by description and loaded only when a memo task arises",
+"A permanent CLAUDE.md section containing the full procedure, template, and script inline",
+"A wiki page analysts paste from when needed",
+"Memorize nothing; let Claude improvise the format each time from an example memo"],
+ans:[0],
+ex:["Correct. A bundled, on-demand capability — instructions plus assets plus an executable step — is what skills are for, with progressive disclosure keeping the cost out of sessions that never write memos.",
+"Inline in CLAUDE.md, the whole procedure taxes every session's context including the majority that never touch memos.",
+"Paste-from-wiki is unversioned, drifts, and skips the script half of the procedure.",
+"Improvisation from one example reintroduces the inconsistency the fixed format exists to end."]},
+
+{id:"Q57",d:3,sc:4,q:"An autonomous run reports 'all 14 sources verified and cited.' Spot checks later find two citations pointing at pages that don't contain the quoted text. What workflow change addresses this class of failure?",
+opts:["Add 'never fabricate citations' prominently to the worker prompts",
+"Require verification to produce checkable artifacts — quote plus URL plus retrieved-text match, validated by a script or hook — so 'verified' means a check passed, not that the model said so",
+"Have a second model re-verify the first model's verification claims",
+"Lower the number of sources per report so verification is easier"],
+ans:[1],
+ex:["The model isn't disobeying an instruction it would endorse; it's overclaiming completion. Prohibition doesn't create checkability.",
+"Correct. The verification culture rule: claims of completion are replaced by artifacts a deterministic check can validate. A citation is 'verified' when the script finds the quote at the URL — trust moves from assertion to evidence.",
+"A second model checking the first's claims is still assertion checking assertion; the ground truth (does the page contain the quote?) is mechanically checkable and should be.",
+"Fewer sources shrinks the surface without changing the property that 'verified' is currently unfalsifiable."]},
+
+{id:"Q58",d:4,sc:4,q:"Workers analyze sources by receiving the full source text followed by analysis instructions in one prompt. Long sources sometimes 'absorb' the instructions — the worker summarizes instead of analyzing, or follows imperative sentences that appear inside the source itself. What is the right prompt-structure fix?",
+opts:["Delimit the prompt with XML tags — e.g. <source_text> around the document and <instructions> around the task — and state that content inside source tags is data to analyze, never directives to follow",
+"Shorten the instructions so they're harder to lose",
+"Move the instructions before the source text and hope position protects them",
+"Ban sources that contain imperative sentences"],
+ans:[0],
+ex:["Correct. Structural delimitation is the standard defense: tags give the model an unambiguous boundary between data and directive, and the explicit data-not-directives rule inoculates against instruction-like text inside sources.",
+"Shorter instructions are still undelimited — the boundary problem, not the length, is the failure.",
+"Position helps recency-weighted attention but provides no boundary; source-embedded imperatives still read as instructions.",
+"Real-world sources contain imperative prose constantly; filtering them away is neither feasible nor necessary once the boundary exists."]},
+
+{id:"Q59",d:5,sc:4,q:"Three hours into a long research session, automatic context compaction begins summarizing older turns, and the agent loses track of its task list — which sources are done, which remain, which failed. What is the resilient design?",
+opts:["Disable compaction so nothing is ever summarized away",
+"Keep operational state — the task list with statuses — in an external artifact (a state file) the agent updates as it works and re-reads after any compaction, so progress tracking never depends on conversational memory",
+"Ask the agent to restate its full task list every few turns so recent copies survive compaction",
+"Restart the session every hour to keep contexts short"],
+ans:[1],
+ex:["Without compaction the session simply hits the window ceiling and fails differently; the pressure is real and needs a design answer.",
+"Correct. State that must survive context management belongs outside the context: an external file is the durable source of truth, updated transactionally and re-loadable at any point. Conversation is a lossy medium; treat it as one.",
+"Periodic restatement burns tokens to race the compactor and still loses whenever timing is unlucky.",
+"Hourly restarts discard accumulated understanding wholesale — a harsher version of the loss being prevented."]},
+
+{id:"Q60",d:5,sc:4,q:"Client-facing reports currently interleave source-backed facts with the synthesizer's own inferences, and clients cannot tell which is which. One report presented an inferred market estimate as if a source stated it. What is the structural fix?",
+opts:["Instruct the synthesizer to be careful about accuracy in final reports",
+"Track provenance per claim through the pipeline: workers tag findings as source-backed (with citation) or inferred, and the synthesizer is required to carry the tag into the report — inference labeled as inference, facts with citations",
+"Remove all inference from reports so only quoted source material remains",
+"Add a disclaimer that reports may contain both facts and inferences"],
+ans:[1],
+ex:["Care is not a data model; the pipeline currently gives the synthesizer no way to know a claim's origin even when careful.",
+"Correct. Provenance is metadata that must travel with each claim from the worker that produced it: tagged at creation, preserved through synthesis, surfaced in the deliverable. Presentation then follows the data instead of guessing.",
+"Inference is a legitimate part of analysis — clients pay for it. The failure is unlabeled inference, and labeling fixes that without gutting the product.",
+"A blanket disclaimer tells the client every claim is unreliable, which is both untrue and useless for distinguishing any specific claim."]}
+];
+
+
+const WEIGHTS={1:.27,2:.18,3:.20,4:.20,5:.15};
+const DNAMES={1:"Agentic Architecture & Orchestration",2:"Tool Design & MCP Integration",3:"Claude Code Configuration & Workflows",4:"Prompt Engineering & Structured Output",5:"Context Management & Reliability"};
+const DCOLORS={1:"var(--d1)",2:"var(--d2)",3:"var(--d3)",4:"var(--d4)",5:"var(--d5)"};
+const LETTERS=["A","B","C","D"];
+const EXAM_SECONDS=120*60;
+
+let answers=Array(QUESTIONS.length).fill(null).map(()=>[]);
+let flags=Array(QUESTIONS.length).fill(false);
+let cur=0, remaining=EXAM_SECONDS, tick=null, submitted=false, startedAt=null;
+
+function startExam(){
+  document.getElementById("start").style.display="none";
+  document.getElementById("exam").style.display="block";
+  startedAt=Date.now();
+  buildPalette(); render();
+  tick=setInterval(()=>{
+    remaining--;
+    drawTimer();
+    if(remaining<=0){clearInterval(tick);doSubmit(true);}
+  },1000);
+  drawTimer();
+}
+function drawTimer(){
+  const m=Math.max(0,Math.floor(remaining/60)), s=Math.max(0,remaining%60);
+  const el=document.getElementById("timer");
+  el.textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+  el.classList.toggle("low",remaining<=600);
+}
+function buildPalette(){
+  const g=document.getElementById("pgrid"); g.innerHTML="";
+  QUESTIONS.forEach((q,i)=>{
+    const b=document.createElement("button");
+    b.className="pcell"; b.textContent=i+1;
+    b.setAttribute("aria-label","Go to question "+(i+1));
+    b.onclick=()=>{cur=i;render();};
+    g.appendChild(b);
+  });
+}
+function paintPalette(){
+  document.querySelectorAll(".pcell").forEach((b,i)=>{
+    b.classList.toggle("answered",answers[i].length>0);
+    b.classList.toggle("flagged",flags[i]);
+    b.classList.toggle("current",i===cur);
+  });
+}
+function render(){
+  const q=QUESTIONS[cur], sc=SCENARIOS[q.sc];
+  document.getElementById("prog").textContent="Question "+(cur+1)+" of "+QUESTIONS.length;
+  const pane=document.getElementById("qpane");
+  const optsHtml=q.opts.map((o,i)=>{
+    const sel=answers[cur].includes(i);
+    return '<button class="opt'+(sel?" sel":"")+'" onclick="pick('+i+')"><span class="key">'+LETTERS[i]+'</span><span>'+esc(o)+'</span></button>';
+  }).join("");
+  pane.innerHTML=
+    '<details class="scen"><summary>Scenario · '+esc(sc.name)+'</summary><div class="brief serif">'+esc(sc.brief)+'</div></details>'+
+    '<div class="qmeta"><span class="dtag" style="background:'+DCOLORS[q.d]+'">D'+q.d+'</span><span>'+esc(DNAMES[q.d])+'</span>'+
+    '<button class="flagbtn'+(flags[cur]?" on":"")+'" onclick="toggleFlag()">'+(flags[cur]?"Flagged":"Flag for review")+'</button></div>'+
+    '<p class="qtext">'+esc(q.q)+'</p>'+
+    (q.multi?'<p class="multi-note">Select TWO answers — both required for credit.</p>':'')+
+    '<div class="opts">'+optsHtml+'</div>'+
+    '<div class="nav"><button onclick="move(-1)" '+(cur===0?"disabled":"")+'>Previous</button>'+
+    (cur===QUESTIONS.length-1?'<button class="next" onclick="askSubmit()">Finish &amp; submit</button>':'<button class="next" onclick="move(1)">Next question</button>')+
+    '</div>';
+  paintPalette();
+  window.scrollTo({top:0});
+}
+function pick(i){
+  const q=QUESTIONS[cur];
+  if(q.multi){
+    const at=answers[cur].indexOf(i);
+    if(at>=0)answers[cur].splice(at,1);
+    else{answers[cur].push(i); if(answers[cur].length>2)answers[cur].shift();}
+  }else{
+    answers[cur]=[i];
+  }
+  render();
+}
+function toggleFlag(){flags[cur]=!flags[cur];render();}
+function move(d){cur=Math.min(QUESTIONS.length-1,Math.max(0,cur+d));render();}
+document.addEventListener("keydown",e=>{
+  if(submitted||!startedAt)return;
+  if(document.getElementById("modal").classList.contains("open"))return;
+  if(e.key>="1"&&e.key<="4")pick(Number(e.key)-1);
+  else if(e.key==="ArrowRight")move(1);
+  else if(e.key==="ArrowLeft")move(-1);
+  else if(e.key==="f"||e.key==="F")toggleFlag();
+});
+function askSubmit(){
+  const un=answers.filter(a=>a.length===0).length;
+  document.getElementById("mbody").textContent= un>0
+    ? un+" question"+(un===1?" is":"s are")+" unanswered and will score zero. Submit anyway?"
+    : "All 60 questions answered. Ready to score?";
+  document.getElementById("modal").classList.add("open");
+}
+function closeModal(){document.getElementById("modal").classList.remove("open");}
+function isCorrect(i){
+  const q=QUESTIONS[i], a=[...answers[i]].sort().join(","), k=[...q.ans].sort().join(",");
+  return a===k;
+}
+function doSubmit(auto){
+  if(submitted)return; submitted=true;
+  clearInterval(tick); closeModal();
+  const usedSec=Math.min(EXAM_SECONDS,Math.round((Date.now()-startedAt)/1000));
+  const perD={},corrD={};
+  QUESTIONS.forEach((q,i)=>{perD[q.d]=(perD[q.d]||0)+1; if(isCorrect(i))corrD[q.d]=(corrD[q.d]||0)+1;});
+  let scaled=0;
+  for(const d of [1,2,3,4,5]) scaled+=((corrD[d]||0)/perD[d])*WEIGHTS[d]*1000;
+  scaled=Math.round(scaled);
+  const totalCorrect=QUESTIONS.reduce((n,_,i)=>n+(isCorrect(i)?1:0),0);
+  const pass=scaled>=720;
+  document.getElementById("exam").style.display="none";
+  const R=document.getElementById("results");
+  const mins=Math.floor(usedSec/60), secs=usedSec%60;
+  let bars="";
+  for(const d of [1,2,3,4,5]){
+    const c=corrD[d]||0,t=perD[d],p=Math.round(100*c/t);
+    bars+='<div class="dbar"><div class="top"><b>D'+d+' · '+esc(DNAMES[d])+'</b><span>'+c+'/'+t+' ('+p+'%) · +'+Math.round((c/t)*WEIGHTS[d]*1000)+'pts</span></div><div class="track"><div class="fill" style="width:'+p+'%;background:'+DCOLORS[d]+'"></div></div></div>';
+  }
+  R.innerHTML=
+    '<div class="scorecard"><div><div class="bigscore">'+scaled+' <small>/ 1000</small></div><div class="verdict '+(pass?"pass":"fail")+'">'+(pass?"PASSED":"NOT PASSED")+'</div></div>'+
+    '<div class="scmeta">'+totalCorrect+' of 60 correct · Pass mark 720<br>Time used '+mins+'m '+String(secs).padStart(2,"0")+'s of 120m'+(auto?' · auto-submitted at time':'')+'</div></div>'+
+    '<div class="dbars">'+bars+'</div>'+
+    '<p class="readnote serif">The real exam reports an equated scaled score balanced across forms, so read this number as a readiness gauge with a margin, not a prediction. Review every miss below against one question: what is the consequence of failure, and what is the cheapest mechanism that reliably handles it?</p>'+
+    '<div class="filters" id="filters">'+
+      '<button class="on" onclick="setFilter(this,\'all\')">All 60</button>'+
+      '<button onclick="setFilter(this,\'wrong\')">Incorrect</button>'+
+      '<button onclick="setFilter(this,\'flag\')">Flagged</button>'+
+    '</div><div id="review"></div>'+
+    '<div class="retake"><button onclick="location.reload()">Reset and retake</button></div>';
+  R.style.display="block";
+  drawReview("all");
+  window.scrollTo({top:0});
+}
+function setFilter(btn,mode){
+  document.querySelectorAll("#filters button").forEach(b=>b.classList.remove("on"));
+  btn.classList.add("on"); drawReview(mode);
+}
+function drawReview(mode){
+  const box=document.getElementById("review"); box.innerHTML="";
+  QUESTIONS.forEach((q,i)=>{
+    const ok=isCorrect(i);
+    if(mode==="wrong"&&ok)return;
+    if(mode==="flag"&&!flags[i])return;
+    const mine=answers[i];
+    let opts="";
+    q.opts.forEach((o,j)=>{
+      const isAns=q.ans.includes(j), wasMine=mine.includes(j);
+      let cls="ropt"+(isAns?" correct":(wasMine?" chosen-wrong":""));
+      let tag="";
+      if(isAns&&wasMine)tag='<span class="tagline c">Your answer · correct</span>';
+      else if(isAns)tag='<span class="tagline c">Correct answer</span>';
+      else if(wasMine)tag='<span class="tagline y">Your answer</span>';
+      opts+='<div class="'+cls+'"><div class="head"><span class="k">'+LETTERS[j]+'</span><span>'+esc(o)+'</span>'+tag+'</div><div class="why">'+esc(q.ex[j])+'</div></div>';
+    });
+    box.innerHTML+=
+      '<div class="rq '+(ok?"right":"wrong")+'">'+
+      '<div class="qmeta"><span class="dtag" style="background:'+DCOLORS[q.d]+'">D'+q.d+'</span><span>Question '+(i+1)+' · '+esc(SCENARIOS[q.sc].name)+(flags[i]?" · flagged":"")+'</span>'+
+      '<span style="margin-left:auto;font-weight:700;color:'+(ok?"var(--good)":"var(--bad)")+'">'+(ok?"Correct":(mine.length?"Incorrect":"Unanswered"))+'</span></div>'+
+      '<p class="qtext">'+esc(q.q)+'</p>'+(q.multi?'<p class="multi-note">Select TWO</p>':'')+opts+'</div>';
+  });
+  if(!box.innerHTML)box.innerHTML='<p style="color:var(--faint)">Nothing in this filter.</p>';
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+</script>
+</body>
+</html>
